@@ -65,10 +65,17 @@ def run(data_path, log_top):
 
     # select the model with the lowest test RMSE
     experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
-    # best_run = client.search_runs( ...  )[0]
+    best_run = client.search_runs(experiment_ids = 3,
+                                  run_view_type= mlflow.entities.ViewType.ACTIVE_ONLY,
+                                  max_results=1,  
+                                  order_by=["metrics.test_rmse ASC"]
+                                 )[0]
+    
+    best_run_id = best_run.info.run_id
 
     # register the best model
-    # mlflow.register_model( ... )
+    mlflow.register_model(model_uri = f"runs:/{best_run_id}/model", 
+                          name  = "Best_RFR_based_on_202103_test_data")
 
 
 if __name__ == '__main__':
@@ -76,7 +83,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--data_path",
-        default="./output",
+        default="../data/output",
         help="the location where the processed NYC taxi trip data was saved."
     )
     parser.add_argument(
