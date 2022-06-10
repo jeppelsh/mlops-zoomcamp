@@ -14,8 +14,8 @@ def load_pickle(filename: str):
 
 def run(data_path):
     
-    mlflow.set_tracking_uri('sqlite:///taxidb.sqlite')
-    mlflow.set_experiment('homework_2_taxi_experiment')
+    #mlflow.set_tracking_uri('sqlite:///taxidb.sqlite')
+    #mlflow.set_experiment('homework_2_taxi_experiment')
     
     # Enable autologging
     mlflow.sklearn.autolog() 

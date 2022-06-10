@@ -32,13 +32,23 @@ def load_pickle(filename):
 
 
 def train_and_log_model(data_path, params):
+    print("Loading pickles...")
     X_train, y_train = load_pickle(os.path.join(data_path, "train.pkl"))
     X_valid, y_valid = load_pickle(os.path.join(data_path, "valid.pkl"))
     X_test, y_test = load_pickle(os.path.join(data_path, "test.pkl"))
 
+    print("Starting run...")
     with mlflow.start_run():
-        params = space_eval(SPACE, params)
+        
+        print("params:", params)
+        
+        print("Getting params...")
+        params = space_eval(SPACE, params) # Why is params empty? --> No params were passed
+        
+        print("Initializing RFR...")
         rf = RandomForestRegressor(**params)
+        
+        print("Fitting RFR...")
         rf.fit(X_train, y_train)
 
         # evaluate model on the validation and test sets
@@ -54,24 +64,34 @@ def run(data_path, log_top):
 
     # retrieve the top_n model runs and log the models to MLflow
     experiment = client.get_experiment_by_name(HPO_EXPERIMENT_NAME)
+    print("Received experiment", HPO_EXPERIMENT_NAME)
+    
     runs = client.search_runs(
         experiment_ids=experiment.experiment_id,
         run_view_type=ViewType.ACTIVE_ONLY,
         max_results=log_top,
         order_by=["metrics.rmse ASC"]
     )
+    
+    print("No. of runs:", len(runs))
+    
     for run in runs:
+        
+        print("Params of current run:", run.data.params) # Why is params empty?
+        
         train_and_log_model(data_path=data_path, params=run.data.params)
 
     # select the model with the lowest test RMSE
     experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
-    best_run = client.search_runs(experiment_ids = 3,
+    best_run = client.search_runs(experiment_ids = 1,
                                   run_view_type= mlflow.entities.ViewType.ACTIVE_ONLY,
                                   max_results=1,  
                                   order_by=["metrics.test_rmse ASC"]
                                  )[0]
     
     best_run_id = best_run.info.run_id
+    
+    print(best_run_id)
 
     # register the best model
     mlflow.register_model(model_uri = f"runs:/{best_run_id}/model", 
